@@ -1,0 +1,129 @@
+. 01_data_exploration.ipynb
+python
+Copy
+Edit
+# 01_data_exploration.ipynb
+
+# 📌 Purpose: Load and explore gene expression data
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# 🔹 Load example data (replace with actual file)
+data = pd.read_csv("data/example_expression.csv", index_col=0)
+
+# 🔹 Basic checks
+print(data.shape)
+print(data.head())
+
+# 🔹 Check for missing values
+print(data.isnull().sum())
+
+# 🔹 Class distribution (assuming labels column exists)
+if 'label' in data.columns:
+    sns.countplot(x='label', data=data)
+    plt.title("Subtype Distribution")
+    plt.show()
+
+
+ 2. 02_dimensionality_reduction.ipynb
+python
+Copy
+Edit
+# 02_dimensionality_reduction.ipynb
+
+# 📌 Purpose: Apply PCA and UMAP for visualization
+from sklearn.decomposition import PCA
+import umap
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+
+# 🔹 Load data
+data = pd.read_csv("data/example_expression.csv", index_col=0)
+X = data.drop(columns=['label'])  # drop label
+y = data['label']
+
+# 🔹 Normalize
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# 🔹 PCA
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+
+# 🔹 UMAP
+reducer = umap.UMAP()
+X_umap = reducer.fit_transform(X_scaled)
+
+# 🔹 Plot PCA
+plt.figure(figsize=(6,4))
+sns.scatterplot(x=X_pca[:,0], y=X_pca[:,1], hue=y)
+plt.title("PCA of Gene Expression")
+plt.show()
+
+# 🔹 Plot UMAP
+plt.figure(figsize=(6,4))
+sns.scatterplot(x=X_umap[:,0], y=X_umap[:,1], hue=y)
+plt.title("UMAP of Gene Expression")
+plt.show()
+
+ 3. 03_model_training.ipynb
+python
+Copy
+Edit
+# 03_model_training.ipynb
+
+# 📌 Purpose: Train a classifier (Random Forest / XGBoost)
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
+from sklearn.metrics import classification_report
+import pandas as pd
+
+# 🔹 Load data
+data = pd.read_csv("data/example_expression.csv", index_col=0)
+X = data.drop(columns=['label'])
+y = data['label']
+
+# 🔹 Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 🔹 Train model
+model = XGBClassifier()  # or RandomForestClassifier()
+model.fit(X_train, y_train)
+
+# 🔹 Evaluate
+y_pred = model.predict(X_test)
+print(classification_report(y_test, y_pred))
+
+
+04_shap_analysis.ipynb
+python
+Copy
+Edit
+# 04_shap_analysis.ipynb
+
+# 📌 Purpose: Interpret model using SHAP
+import shap
+import pandas as pd
+from xgboost import XGBClassifier
+from sklearn.model_selection import train_test_split
+
+# 🔹 Load data
+data = pd.read_csv("data/example_expression.csv", index_col=0)
+X = data.drop(columns=['label'])
+y = data['label']
+
+# 🔹 Train model
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+model = XGBClassifier()
+model.fit(X_train, y_train)
+
+# 🔹 SHAP analysis
+explainer = shap.Explainer(model)
+shap_values = explainer(X_test)
+
+# 🔹 Summary plot
+shap.summary_plot(shap_values, X_test)
